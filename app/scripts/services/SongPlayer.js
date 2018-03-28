@@ -3,8 +3,61 @@
         var SongPlayer = {};
 
 //        @desc to access the song array and store the album information
-//        @type array
+//        @type {Object}
         var currentAlbum = Fixtures.getAlbum();
+
+
+//        @desc Buzz object audio file
+//        @type {Object}
+          var currentBuzzObject = null;
+
+          //        @function setSong
+          //        @desc Stops currently playing song and loads new audio file as currentBuzzObject
+          //        @param {Object} song
+                  var setSong = function(song) {
+                      if (currentBuzzObject) {
+                        stopSong();
+                      }
+
+                      currentBuzzObject = new buzz.sound(song.audioUrl, {
+                          formats: ['mp3'],
+                          preload: true
+                      });
+
+                      currentBuzzObject.bind('timeupdate', function() {
+                   $rootScope.$apply(function() {
+                       SongPlayer.currentTime = currentBuzzObject.getTime();
+                       var duration = currentBuzzObject.getDuration();
+                       if (SongPlayer.currentTime === duration) {
+                         console.log("End of song");
+                         SongPlayer.next();
+                       }
+                   });
+               });
+
+                      SongPlayer.currentSong = song;
+                  };
+
+                  //        @function playSong
+                  //        @desc plays song and sets song.playing to true so album.html changes play/pause icon
+                  //        @param {Object} song
+                            var playSong = function(song) {
+                              currentBuzzObject.play();
+                              song.playing = true;
+                          }
+
+                  //        @function pauseSong
+                  //        @desc pauses song and sets song.playing to false so album.html changes play/pause icon
+                  //        @param {Object} song
+                          var pauseSong = function(song) {
+                              currentBuzzObject.pause();
+                              song.playing = false;
+                          }
+
+                          var stopSong = function() {
+                           currentBuzzObject.stop();
+                           SongPlayer.currentSong.playing = null;
+                          }
 
 //        @desc to get index of the song in current album
 //        @param {object} song
@@ -24,58 +77,6 @@
 //        @type {Number}
           SongPlayer.volume = 75;
 
-
-//        @desc Buzz object audio file
-//        @type {Object}
-        var currentBuzzObject = null;
-
-//        @function setSong
-//        @desc Stops currently playing song and loads new audio file as currentBuzzObject
-//        @param {Object} song
-        var setSong = function(song) {
-            if (currentBuzzObject) {
-              stopSong();
-            }
-
-            currentBuzzObject = new buzz.sound(song.audioUrl, {
-                formats: ['mp3'],
-                preload: true
-            });
-
-            currentBuzzObject.bind('timeupdate', function() {
-         $rootScope.$apply(function() {
-             SongPlayer.currentTime = currentBuzzObject.getTime();
-             var duration = currentBuzzObject.getDuration();
-             if (SongPlayer.currentTime === duration) {
-               console.log("End of song");
-               SongPlayer.next();
-             }
-         });
-     });
-
-            SongPlayer.currentSong = song;
-        };
-
-//        @function playSong
-//        @desc plays song and sets song.playing to true so album.html changes play/pause icon
-//        @param {Object} song
-          var playSong = function(song) {
-            currentBuzzObject.play();
-            song.playing = true;
-        }
-
-//        @function pauseSong
-//        @desc pauses song and sets song.playing to false so album.html changes play/pause icon
-//        @param {Object} song
-        var pauseSong = function(song) {
-            currentBuzzObject.pause();
-            song.playing = false;
-        }
-
-        var stopSong = function() {
-         currentBuzzObject.stop();
-         SongPlayer.currentSong.playing = null;
-        }
 
 //        @function SongPlayer.play(song)
 //        @desc plays a song from the beginning if the song has not already started and continues playing the song from where it left off if not
@@ -109,7 +110,7 @@
             currentSongIndex--;
 
             if (currentSongIndex < 0) {
-                  stopSong();
+                  stopSong(SongPlayer.currentSong);
                } else {
              var song = currentAlbum.songs[currentSongIndex];
              setSong(song);
@@ -123,14 +124,14 @@
             var currentSongIndex = getSongIndex(SongPlayer.currentSong);
             currentSongIndex++;
 
-            if (currentSongIndex > Object.keys(currentAlbum).length) {
-                stopSong();
+            if (currentSongIndex === currentAlbum.songs.length) {
+                stopSong(SongPlayer.currentSong);
             } else {
                var song = currentAlbum.songs[currentSongIndex];
               setSong(song);
               playSong(song);
           }
-       }
+       };
 
 
  // @function setCurrentTime
